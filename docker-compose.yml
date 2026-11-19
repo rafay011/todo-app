@@ -1,0 +1,40 @@
+services:
+  # Database: runs straight from the official image, no Dockerfile needed
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-todo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-todo}
+      POSTGRES_DB: ${POSTGRES_DB:-tododb}
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # keeps your data after restarts
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-todo} -d ${POSTGRES_DB:-tododb}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Backend: FastAPI, built from backend/Dockerfile
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-todo}:${POSTGRES_PASSWORD:-todo}@db:5432/${POSTGRES_DB:-tododb}
+    depends_on:
+      db:
+        condition: service_healthy   # wait until Postgres is ready
+    ports:
+      - "8000:8000"   # open http://localhost:8000/docs for the API docs
+
+  # Frontend: React built and served by nginx, from frontend/Dockerfile
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"   # open http://localhost:3000 for the app
+
+volumes:
+  pgdata:

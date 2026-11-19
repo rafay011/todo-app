@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo</title>
+    <!-- Set the saved theme before the page paints, so there is no light/dark flash -->
+    <script>
+      try {
+        var a = JSON.parse(localStorage.getItem("todo-appearance") || "{}");
+        var t = a.theme || "system";
+        if (t === "system") {
+          t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.dataset.theme = t;
+        document.documentElement.dataset.accent = a.accent || "indigo";
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
